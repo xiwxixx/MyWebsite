@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyWebsite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(to bottom, #000000, #0a0a0a, #121212, #000000);
+            color: white;
+            text-align: center;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+        .form-box {
+            width: 300px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            text-align: center;
+        }
+        input, button {
+            width: 100%;
+            padding: 6px;
+            margin: 4px 0;
+            border: none;
+            border-radius: 4px;
+        }
+        input {
+            background: #111;
+            color: white;
+            font-size: 0.85rem;
+        }
+        button {
+            background: #333;
+            color: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        #message {
+            margin-top: 8px;
+            font-size: 0.85rem;
+        }
+        .captcha {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 10px 0;
+            transform: rotate(-10deg);
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>MyWebsite</h1>
+    <div class="form-box" id="authContainer">
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <div id="captchaBox">
+            <span class="captcha" id="captcha"></span>
+            <input type="text" id="captchaInput" placeholder="Enter Captcha">
+        </div>
+        <button onclick="authenticate()" id="authButton">Log In</button>
+        <button onclick="toggleRegister()" id="registerButton">Create Account</button>
+    </div>
+    <div id="message"></div>
+    
+    <!-- Firebase SDK Script -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-analytics.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCemOKoU5J2pWnqTLJIlnW10BSW8CDGxxg",
+            authDomain: "codespace-5f305.firebaseapp.com",
+            projectId: "codespace-5f305",
+            storageBucket: "codespace-5f305.firebasestorage.app",
+            messagingSenderId: "352649583316",
+            appId: "1:352649583316:web:7c32efaf37524ad842f941",
+            measurementId: "G-0L87HR4408"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+    </script>
+
+    <script>
+        let isRegistering = false;
+        let users = {};
+        const SECRET_KEY = "#KEYCRACKER";
+
+        function generateCaptcha() {
+            let num = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById("captcha").innerText = num;
+        }
+        generateCaptcha();
+
+        function hasAccount() {
+            return localStorage.getItem("account_created") === "true";
+        }
+
+        function setAccountFlag() {
+            localStorage.setItem("account_created", "true");
+        }
+
+        function clearAccountFlag() {
+            localStorage.removeItem("account_created");
+        }
+
+        function toggleRegister() {
+            isRegistering = !isRegistering;
+            document.getElementById("authButton").innerText = isRegistering ? "Register" : "Log In";
+        }
+
+        function authenticate() {
+            let username = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+            let captchaInput = document.getElementById("captchaInput").value;
+            let messageBox = document.getElementById("message");
+            let captchaValue = document.getElementById("captcha").innerText;
+
+            if (username === SECRET_KEY) {
+                clearAccountFlag();
+                messageBox.innerText = "Account restriction lifted!";
+                messageBox.style.color = "green";
+                return;
+            }
+
+            if (!/^[a-zA-Z]+$/.test(username)) {
+                messageBox.innerText = "Username must be in English letters only!";
+                messageBox.style.color = "red";
+                return;
+            }
+
+            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password)) {
+                messageBox.innerText = "Password must be at least 8 characters, include uppercase, lowercase, number, and symbol!";
+                messageBox.style.color = "red";
+                return;
+            }
+
+            if (captchaInput !== captchaValue) {
+                messageBox.innerText = "Incorrect Captcha!";
+                messageBox.style.color = "red";
+                generateCaptcha();
+                return;
+            }
+
+            if (isRegistering) {
+                if (hasAccount()) {
+                    messageBox.innerText = "Only one account per device is allowed!";
+                    messageBox.style.color = "red";
+                    return;
+                }
+                users[username] = password;
+                setAccountFlag();
+                messageBox.innerText = "Account created successfully!";
+                messageBox.style.color = "green";
+            } else {
+                if (users[username] === password) {
+                    document.getElementById("authContainer").style.display = "none";
+                    messageBox.style.display = "none";
+                } else {
+                    messageBox.innerText = "Incorrect username or password";
+                    messageBox.style.color = "red";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
